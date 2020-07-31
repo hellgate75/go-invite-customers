@@ -19,10 +19,10 @@ func TestEncodeCustomerDetailedInvite(t *testing.T) {
 		invite model.CompleteInviteList
 		enc    Encoding
 	}
-	inviteList := model.CompleteInviteList{
-		MatchingCustomerIds:   []model.CustomerDetails{{1, "Thomas Barret"}},
-		UnMatchingCustomerIds: []model.CustomerDetails{{2, "Michael Barret"}},
-	}
+	inviteList := *model.NewCompleteInviteList()
+	inviteList.MatchingCustomerIds = []model.CustomerDetails{{1, "Thomas Barret"}}
+	inviteList.UnMatchingCustomerIds = []model.CustomerDetails{{2, "Michael Barret"}}
+
 	tests := []struct {
 		name     string
 		args     args
@@ -104,9 +104,9 @@ func TestEncodeCustomerInvite(t *testing.T) {
 		invite model.InviteList
 		enc    Encoding
 	}
-	inviteList := model.InviteList{
-		[]model.CustomerDetails{{1, "Thomas Barret"}},
-	}
+	inviteList := *model.NewInviteList()
+	inviteList.CustomerIds = []model.CustomerDetails{{1, "Thomas Barret"}}
+
 	tests := []struct {
 		name     string
 		args     args

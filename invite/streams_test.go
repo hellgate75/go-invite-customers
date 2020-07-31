@@ -17,7 +17,7 @@ import (
 	"testing"
 )
 
-func createTestFile() (*os.File, error) {
+func CreateTestFile() (*os.File, error) {
 	var data = make([]byte, 0)
 	data = append(data, []byte("{\"latitude\": \"53.339111\", \"user_id\": 12, \"name\": \"Thomas Barret\", \"longitude\": \"-6.257611\"}\n")...)
 	data = append(data, []byte("{\"latitude\": \"50.339428\", \"user_id\": 1, \"name\": \"Michael Barret\", \"longitude\": \"-3.257664\"}\n")...)
@@ -33,7 +33,21 @@ func createTestFile() (*os.File, error) {
 	return file, err
 }
 
-func deleteTestFile(name string) error {
+func CreateTestListFile() (*os.File, error) {
+	var data = []byte("{\"customers\":[{\"user_id\":1,\"name\":\"Thomas Barrett\",\"latitude\":\"10.123456\",\"longitude\":\"-5.98765\"}]}\n\n")
+	file, err := ioutil.TempFile("", uuid.New().String())
+	if err != nil {
+		return nil, err
+	}
+	file.Write(data)
+	err = file.Sync()
+	if err != nil {
+		return nil, err
+	}
+	return file, err
+}
+
+func DeleteTestFile(name string) error {
 	if name != "" {
 		return os.Remove(name)
 	}
@@ -254,14 +268,14 @@ func TestOpenFileStream(t *testing.T) {
 	type args struct {
 		file string
 	}
-	file, err := createTestFile()
+	file, err := CreateTestFile()
 	if err != nil {
 		t.Errorf("OpenFileStream() error = %v, opening main file stream", err)
 		return
 	}
 	name := file.Name()
 	defer func() {
-		_ = deleteTestFile(name)
+		_ = DeleteTestFile(name)
 	}()
 	_ = file.Close()
 	tests := []struct {

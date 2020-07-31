@@ -37,7 +37,9 @@ func printUsage(message string, exitCode int) {
 	}
 	fmt.Println("Parameters:")
 	flagSet.PrintDefaults()
-	os.Exit(exitCode)
+	if exitCode >= 0 {
+		os.Exit(exitCode)
+	}
 }
 
 func init() {

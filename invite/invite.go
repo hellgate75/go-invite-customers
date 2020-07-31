@@ -17,7 +17,6 @@ import (
 	"github.com/hellgate75/go-invite-customers/io"
 	"github.com/hellgate75/go-invite-customers/model"
 	io2 "io"
-	"io/ioutil"
 	"time"
 )
 
@@ -65,11 +64,14 @@ func readLineByLine(r io2.Reader, inputData InputData, ch chan model.CustomerOff
 	}
 }
 func parseAndServerList(r io2.Reader, inputData InputData, ch chan model.CustomerOffice, errCh chan error) {
-	data, err := ioutil.ReadAll(r)
-	if err != nil {
-		errCh <- err
-		return
+	br := bufio.NewReader(r)
+	buff := bytes.NewBuffer([]byte{})
+	line, _, err := br.ReadLine()
+	for err == nil || len(line) > 0 {
+		buff.Write(line)
+		line, _, err = br.ReadLine()
 	}
+	data := buff.Bytes()
 	list, err := io.ReadCustomerOfficeList(data, inputData.InputEncoding)
 	if err != nil {
 		errCh <- err
@@ -108,7 +110,7 @@ func createChannelWriterFunc(url string) (function func(InputData, chan model.Cu
 		}
 		function = func(inputData InputData, ch chan model.CustomerOffice, errCh chan error) {
 			defer func() {
-				// Close the udp connection
+				// Close the tcp connection
 				if c != nil {
 					_ = c.Close()
 				}
@@ -127,7 +129,7 @@ func createChannelWriterFunc(url string) (function func(InputData, chan model.Cu
 		}
 		function = func(inputData InputData, ch chan model.CustomerOffice, errCh chan error) {
 			defer func() {
-				// Close the udp connection
+				// Close the http get body
 				if re != nil {
 					_ = re.Body.Close()
 				}
@@ -146,7 +148,7 @@ func createChannelWriterFunc(url string) (function func(InputData, chan model.Cu
 		}
 		function = func(inputData InputData, ch chan model.CustomerOffice, errCh chan error) {
 			defer func() {
-				// Close the udp connection
+				// Close the file
 				if f != nil {
 					_ = f.Close()
 				}
@@ -168,8 +170,14 @@ func ExecuteInviteScan(input InputData) (out OutputData, errs []error) {
 		IsComplete: input.UseDetailedOutput,
 	}
 	errs = make([]error, 0)
-	var ch = make(chan model.CustomerOffice)
-	var errCh = make(chan error)
+	var ch = make(chan model.CustomerOffice, 1000)
+	var errCh = make(chan error, 1000)
+	defer func() {
+		_ = recover()
+		// destroy channels on exit
+		close(ch)
+		close(errCh)
+	}()
 	fn, err := createChannelWriterFunc(input.FileOrStream)
 	if err != nil {
 		errs = append(errs, err)

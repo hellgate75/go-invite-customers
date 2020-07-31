@@ -10,6 +10,7 @@ package model
 
 import (
 	"reflect"
+	"sync"
 	"testing"
 )
 
@@ -182,6 +183,8 @@ func TestNewCompleteInviteList(t *testing.T) {
 		{
 			name: "Test Creation of a detailed output data",
 			want: &CompleteInviteList{
+				sync.Mutex{},
+				sync.Mutex{},
 				make([]CustomerDetails, 0),
 				make([]CustomerDetails, 0),
 			},
@@ -204,6 +207,7 @@ func TestNewInviteList(t *testing.T) {
 		{
 			name: "Test Creation of a simple output data",
 			want: &InviteList{
+				sync.Mutex{},
 				make([]CustomerDetails, 0),
 			},
 		},
