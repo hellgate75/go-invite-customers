@@ -75,6 +75,15 @@ Exclusion Summary:
 [1] Thomas Barret
 `),
 		},
+		{
+			name: "Not Encode a valid model.CompleteInviteList to Unknown format",
+			args: args{
+				invite: inviteList,
+				enc:    UnknownEncoding,
+			},
+			wantErr:  true,
+			wantData: []byte{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -145,6 +154,15 @@ func TestEncodeCustomerInvite(t *testing.T) {
 [1] Thomas Barret
 `),
 		},
+		{
+			name: "Not Encode a valid model.CompleteInviteList to Unknown format",
+			args: args{
+				invite: inviteList,
+				enc:    UnknownEncoding,
+			},
+			wantErr:  true,
+			wantData: []byte{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -209,6 +227,15 @@ longitude: "-5.98765"
 			wantCustomer: customer,
 			wantErr:      false,
 		},
+		{
+			name: "Test Unknown Import single model.CustomerOffice data",
+			args: args{
+				data: []byte{},
+				enc:  UnknownEncoding,
+			},
+			wantCustomer: model.CustomerOffice{},
+			wantErr:      true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -251,7 +278,23 @@ func TestToEncoding(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Transform correct encoding format text",
+			name: "Transform correct xml encoding format text",
+			args: args{
+				in: "xml",
+			},
+			wantEnc: XmlEncoding,
+			wantErr: false,
+		},
+		{
+			name: "Transform correct text encoding format text",
+			args: args{
+				in: "text",
+			},
+			wantEnc: TextEncoding,
+			wantErr: false,
+		},
+		{
+			name: "Transform incorrect encoding format text",
 			args: args{
 				in: "bin",
 			},
@@ -274,6 +317,10 @@ func TestToEncoding(t *testing.T) {
 }
 
 func Test_textEncodeCompleteInviteList(t *testing.T) {
+	inviteList := model.CompleteInviteList{
+		MatchingCustomerIds:   []model.CustomerDetails{{1, "Thomas Barret"}},
+		UnMatchingCustomerIds: []model.CustomerDetails{{2, "Michael Barret"}},
+	}
 	type args struct {
 		list model.CompleteInviteList
 	}
@@ -283,7 +330,18 @@ func Test_textEncodeCompleteInviteList(t *testing.T) {
 		wantOut []byte
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Test Text Encode model.CompleteInviteList in Json format",
+			args: args{
+				list: inviteList,
+			},
+			wantErr: false,
+			wantOut: []byte(`Invite Summary:
+[1] Thomas Barret
+Exclusion Summary:
+[1] Thomas Barret
+`),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -300,6 +358,9 @@ func Test_textEncodeCompleteInviteList(t *testing.T) {
 }
 
 func Test_textEncodeInviteList(t *testing.T) {
+	inviteList := model.InviteList{
+		CustomerIds: []model.CustomerDetails{{1, "Thomas Barret"}},
+	}
 	type args struct {
 		list model.InviteList
 	}
@@ -309,7 +370,16 @@ func Test_textEncodeInviteList(t *testing.T) {
 		wantOut []byte
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Test Text Encode model.CompleteInviteList in Json format",
+			args: args{
+				list: inviteList,
+			},
+			wantErr: false,
+			wantOut: []byte(`Invite Summary:
+[1] Thomas Barret
+`),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -320,6 +390,83 @@ func Test_textEncodeInviteList(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotOut, tt.wantOut) {
 				t.Errorf("textEncodeInviteList() gotOut = %v, want %v", gotOut, tt.wantOut)
+			}
+		})
+	}
+}
+
+func TestReadCustomerOfficeList(t *testing.T) {
+	type args struct {
+		data []byte
+		enc  Encoding
+	}
+	customer := model.CustomerOffice{
+		UserId:    1,
+		Name:      "Thomas Barrett",
+		Latitude:  "10.123456",
+		Longitude: "-5.98765",
+	}
+	customerList := model.CustomerOfficeList{
+		List: []model.CustomerOffice{customer},
+	}
+	tests := []struct {
+		name         string
+		args         args
+		wantCustomer model.CustomerOfficeList
+		wantErr      bool
+	}{
+		{
+			name: "Test Json Import single model.CustomerOfficeList data",
+			args: args{
+				data: []byte("{\"customers\":[{\"user_id\":1,\"name\":\"Thomas Barrett\",\"latitude\":\"10.123456\",\"longitude\":\"-5.98765\"}]}"),
+				enc:  JsonEncoding,
+			},
+			wantCustomer: customerList,
+			wantErr:      false,
+		},
+		{
+			name: "Test Yaml Import single model.CustomerOfficeList data",
+			args: args{
+				data: []byte(`
+customers:
+- user_id: 1
+  name: Thomas Barrett
+  latitude: "10.123456"
+  longitude: "-5.98765"
+`),
+				enc: YamlEncoding,
+			},
+			wantCustomer: customerList,
+			wantErr:      false,
+		},
+		{
+			name: "Test Xml Import single model.CustomerOfficeList data",
+			args: args{
+				data: []byte("<CustomerOfficeList><customers><user-id>1</user-id><name>Thomas Barrett</name><latitude>10.123456</latitude><longitude>-5.98765</longitude></customers></CustomerOfficeList>"),
+				enc:  XmlEncoding,
+			},
+			wantCustomer: customerList,
+			wantErr:      false,
+		},
+		{
+			name: "Test Unknown Import single model.CustomerOfficeList data",
+			args: args{
+				data: []byte{},
+				enc:  UnknownEncoding,
+			},
+			wantCustomer: model.CustomerOfficeList{},
+			wantErr:      true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotCustomer, err := ReadCustomerOfficeList(tt.args.data, tt.args.enc)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ReadCustomerOfficeList() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotCustomer, tt.wantCustomer) {
+				t.Errorf("ReadCustomerOfficeList() gotCustomer = %v, want %v", gotCustomer, tt.wantCustomer)
 			}
 		})
 	}

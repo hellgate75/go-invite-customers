@@ -42,7 +42,7 @@ func TestCompleteInviteList_AddExcluded(t *testing.T) {
 			name: "Test insert sample excluded customer element",
 			fields: fields{
 				make([]CustomerDetails, 0),
-				make([]CustomerDetails, 0),
+				nil,
 			},
 			args: args{
 				ToInviteData(&CustomerOffice{
@@ -96,7 +96,7 @@ func TestCompleteInviteList_AddInvited(t *testing.T) {
 		{
 			name: "Test insert sample included customer element",
 			fields: fields{
-				make([]CustomerDetails, 0),
+				nil,
 				make([]CustomerDetails, 0),
 			},
 			args: args{
@@ -149,7 +149,7 @@ func TestInviteList_Add(t *testing.T) {
 		{
 			name: "Test insert sample included customer element",
 			fields: fields{
-				make([]CustomerDetails, 0),
+				nil,
 			},
 			args: args{
 				ToInviteData(&CustomerOffice{
@@ -383,7 +383,7 @@ func TestCustomerOffice_IsValid(t *testing.T) {
 		want   bool
 	}{
 		{
-			name: "Test Correct Latitude",
+			name: "Test Correct Latitude and Longitude",
 			fields: fields{
 				UserId:    1,
 				Name:      "Thomas Barrett",
@@ -399,6 +399,16 @@ func TestCustomerOffice_IsValid(t *testing.T) {
 				Name:      "Thomas Barrett",
 				Longitude: "10.22W",
 				Latitude:  "10.2345534535",
+			},
+			want: false,
+		},
+		{
+			name: "Test Wrong Latitude",
+			fields: fields{
+				UserId:    1,
+				Name:      "Thomas Barrett",
+				Longitude: "10.2345534535",
+				Latitude:  "10.22W",
 			},
 			want: false,
 		},

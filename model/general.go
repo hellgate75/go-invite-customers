@@ -8,7 +8,10 @@
 
 package model
 
-import "strconv"
+import (
+	"strconv"
+	"sync"
+)
 
 // Describe input customer office information
 type CustomerOffice struct {
@@ -16,6 +19,11 @@ type CustomerOffice struct {
 	Name      string `json:"name,omitempty" yaml:"name,omitempty" xml:"name,omitempty"`
 	Latitude  string `json:"latitude,omitempty" yaml:"latitude,omitempty" xml:"latitude,omitempty"`
 	Longitude string `json:"longitude,omitempty" yaml:"longitude,omitempty" xml:"longitude,omitempty"`
+}
+
+// Describe input customer office information
+type CustomerOfficeList struct {
+	List []CustomerOffice `json:"customers,omitempty" yaml:"customers,omitempty" xml:"customers,omitempty"`
 }
 
 func (c *CustomerOffice) GetLatitude() (float64, error) {
@@ -40,11 +48,17 @@ type CustomerDetails struct {
 
 // Describe standard output list
 type InviteList struct {
+	m           sync.Mutex
 	CustomerIds []CustomerDetails `json:"customers_list" yaml:"customers_list" xml:"customers-list"`
 }
 
 // Add a new customer id to the invited customers list
 func (il *InviteList) Add(customerId *CustomerDetails) bool {
+	defer func() {
+		_ = recover()
+		il.m.Unlock()
+	}()
+	il.m.Lock()
 	if il.CustomerIds == nil {
 		il.CustomerIds = make([]CustomerDetails, 0)
 	}
@@ -57,12 +71,19 @@ func (il *InviteList) Add(customerId *CustomerDetails) bool {
 
 // Describe detailed output list
 type CompleteInviteList struct {
+	m1                    sync.Mutex
+	m2                    sync.Mutex
 	MatchingCustomerIds   []CustomerDetails `json:"customers_list" yaml:"customers_list" xml:"customers-list"`
 	UnMatchingCustomerIds []CustomerDetails `json:"exclusions_list" yaml:"exclusions_list" xml:"exclusions-list"`
 }
 
 // Add a new customer id to the invited customers list
 func (il *CompleteInviteList) AddInvited(customerId *CustomerDetails) bool {
+	defer func() {
+		_ = recover()
+		il.m1.Unlock()
+	}()
+	il.m1.Lock()
 	if il.MatchingCustomerIds == nil {
 		il.MatchingCustomerIds = make([]CustomerDetails, 0)
 	}
@@ -75,6 +96,11 @@ func (il *CompleteInviteList) AddInvited(customerId *CustomerDetails) bool {
 
 // Add a new customer id to the excluded customers list
 func (il *CompleteInviteList) AddExcluded(customerId *CustomerDetails) bool {
+	defer func() {
+		_ = recover()
+		il.m2.Unlock()
+	}()
+	il.m2.Lock()
 	if il.UnMatchingCustomerIds == nil {
 		il.UnMatchingCustomerIds = make([]CustomerDetails, 0)
 	}
@@ -99,6 +125,7 @@ func ToInviteData(customerData *CustomerOffice) *CustomerDetails {
 // Creates a simple output invitation list bucket pointer
 func NewInviteList() *InviteList {
 	return &InviteList{
+		m:           sync.Mutex{},
 		CustomerIds: make([]CustomerDetails, 0),
 	}
 }
@@ -106,6 +133,8 @@ func NewInviteList() *InviteList {
 // Creates a detailed output invitation list bucket pointer
 func NewCompleteInviteList() *CompleteInviteList {
 	return &CompleteInviteList{
+		sync.Mutex{},
+		sync.Mutex{},
 		make([]CustomerDetails, 0),
 		make([]CustomerDetails, 0),
 	}

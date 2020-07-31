@@ -82,6 +82,30 @@ func ReadCustomerOffice(data []byte, enc Encoding) (customer model.CustomerOffic
 	return customer, err
 }
 
+//  Read the input bytes and decode in the wanted format the wanted model.CustomerOffice input
+//  data type, or report the arisen error.
+//
+//  Data/
+//  bytes that defines the input data to be un-marshalled from the given encoding format
+//
+//  Enc/
+//  Encoding format, accordingly to the type io.Encoding
+//
+//  The output are the decoded object and the error, if occurred during the decoding operations.
+func ReadCustomerOfficeList(data []byte, enc Encoding) (customer model.CustomerOfficeList, err error) {
+	switch enc {
+	case JsonEncoding:
+		err = json.Unmarshal(data, &customer)
+	case YamlEncoding:
+		err = yaml.Unmarshal(data, &customer)
+	case XmlEncoding:
+		err = xml.Unmarshal(data, &customer)
+	default:
+		err = errors.New(fmt.Sprintf("Unknown encoding format %v", enc))
+	}
+	return customer, err
+}
+
 //  Encode the model.InviteList output data type, reporting any error arisen during the encoding
 //
 //  Invite/
