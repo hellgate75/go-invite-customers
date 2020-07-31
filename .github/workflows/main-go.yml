@@ -27,7 +27,7 @@ jobs:
         go get -u github.com/hellgate75/go-invite-customers
 
     - name: Build
-      run: go build -v github.com/hellgate75/go-invite-customers/main.go
+      run: go build -v ./main.go
 
     - name: Test
-      run: go test -cover github.com/hellgate75/go-invite-customers/...
+      run: go test -cover ./...
